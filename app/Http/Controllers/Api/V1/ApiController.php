@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Traits\ApiResponses;
 use Illuminate\Support\Str;
 
 class ApiController extends Controller
 {
+    use ApiResponses;
+
     public function include(string $relationship): bool
     {
         $params = request()->get('include');

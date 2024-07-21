@@ -12,6 +12,13 @@ class Ticket extends Model
     use HasFactory;
     use HasFilter;
 
+    protected $fillable = [
+        'description',
+        'status',
+        'title',
+        'user_id',
+    ];
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');

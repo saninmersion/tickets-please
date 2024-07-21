@@ -34,14 +34,7 @@ class TicketController extends ApiController
             ]);
         }
 
-        $model = [
-            'title'       => $request->input('data.attributes.title'),
-            'description' => $request->input('data.attributes.description'),
-            'status'      => $request->input('data.attributes.status'),
-            'user_id'     => $request->input('data.relationships.author.data.id'),
-        ];
-
-        return new TicketResource(Ticket::query()->create($model));
+        return new TicketResource(Ticket::query()->create($request->mappedAttributes()));
     }
 
     /**
@@ -61,24 +54,12 @@ class TicketController extends ApiController
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateTicketRequest $request, $ticketId) {}
-
     public function replace(ReplaceTicketRequest $request, $ticketId)
     {
         try {
             $ticket = Ticket::query()->findOrFail($ticketId);
 
-            $model = [
-                'title'       => $request->input('data.attributes.title'),
-                'description' => $request->input('data.attributes.description'),
-                'status'      => $request->input('data.attributes.status'),
-                'user_id'     => $request->input('data.relationships.author.data.id'),
-            ];
-
-            $ticket->update($model);
+            $ticket->update($request->mappedAttributes());
 
             return new TicketResource($ticket->refresh());
         } catch (ModelNotFoundException $exception) {
@@ -101,6 +82,26 @@ class TicketController extends ApiController
             return $this->ok('Ticket successfully deleted.');
         } catch (ModelNotFoundException $exception) {
             return $this->error('Ticket not found.', 404);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateTicketRequest $request, $ticketId)
+    {
+        try {
+            $ticket = Ticket::query()
+                ->where('id', $ticketId)
+                ->firstOrFail();
+
+            $ticket->update($request->mappedAttributes());
+
+            return new TicketResource($ticket->refresh());
+        } catch (ModelNotFoundException $exception) {
+            return $this->ok('Ticket not found.', [
+                'error' => 'The provided ticket id does not exist.'
+            ]);
         }
     }
 }

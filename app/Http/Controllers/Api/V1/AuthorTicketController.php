@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Filters\V1\TicketFilter;
 use App\Http\Requests\Api\V1\ReplaceTicketRequest;
 use App\Http\Requests\Api\V1\StoreTicketRequest;
+use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -32,14 +33,7 @@ class AuthorTicketController extends ApiController
                 ->where('id', $ticketId)
                 ->firstOrFail();
 
-            $model  = [
-                'title'       => $request->input('data.attributes.title'),
-                'description' => $request->input('data.attributes.description'),
-                'status'      => $request->input('data.attributes.status'),
-                'user_id'     => $request->input('data.relationships.author.data.id'),
-            ];
-
-            $ticket->update($model);
+            $ticket->update($request->mappedAttributes());
 
             return new TicketResource($ticket->refresh());
         } catch (ModelNotFoundException $exception) {
@@ -51,14 +45,7 @@ class AuthorTicketController extends ApiController
 
     public function store($authorId, StoreTicketRequest $request)
     {
-        $model = [
-            'title'       => $request->input('data.attributes.title'),
-            'description' => $request->input('data.attributes.description'),
-            'status'      => $request->input('data.attributes.status'),
-            'user_id'     => $authorId,
-        ];
-
-        return new TicketResource(Ticket::query()->create($model));
+        return new TicketResource(Ticket::query()->create($request->mappedAttributes()));
     }
 
     public function destroy($authorId, $ticketId)
@@ -74,6 +61,24 @@ class AuthorTicketController extends ApiController
             return $this->ok('Ticket successfully deleted.');
         } catch (ModelNotFoundException $exception) {
             return $this->error('Ticket not found.', 404);
+        }
+    }
+
+    public function update(UpdateTicketRequest $request, $authorId, $ticketId)
+    {
+        try {
+            $ticket = Ticket::query()
+                ->where('user_id', $authorId)
+                ->where('id', $ticketId)
+                ->firstOrFail();
+
+            $ticket->update($request->mappedAttributes());
+
+            return new TicketResource($ticket->refresh());
+        } catch (ModelNotFoundException $exception) {
+            return $this->ok('Ticket not found.', [
+                'error' => 'The provided ticket id does not exist.'
+            ]);
         }
     }
 }

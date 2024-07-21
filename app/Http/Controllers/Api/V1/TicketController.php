@@ -8,8 +8,8 @@ use App\Http\Requests\Api\V1\StoreTicketRequest;
 use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
-use App\Models\User;
 use App\Policies\V1\TicketPolicy;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TicketController extends ApiController
@@ -30,17 +30,12 @@ class TicketController extends ApiController
     public function store(StoreTicketRequest $request)
     {
         try {
-            $user = User::query()->findOrFail($request->input('data.relationships.author.data.id'));
+            $this->isAble('store', Ticket::class);
 
-            $this->isAble('store', null);
-
-        } catch (ModelNotFoundException $exception) {
-            return $this->ok('User not found.', [
-                'error' => 'The provided user id does not exist.'
-            ]);
+            return new TicketResource(Ticket::query()->create($request->mappedAttributes()));
+        } catch (AuthorizationException $exception) {
+            return $this->error('You are not authorized to create the resource.', 401);
         }
-
-        return new TicketResource(Ticket::query()->create($request->mappedAttributes()));
     }
 
     /**
@@ -92,6 +87,8 @@ class TicketController extends ApiController
             return $this->ok('Ticket successfully deleted.');
         } catch (ModelNotFoundException $exception) {
             return $this->error('Ticket not found.', 404);
+        } catch (AuthorizationException $exception) {
+            return $this->error('You are not authorized to update the resource.', 401);
         }
     }
 

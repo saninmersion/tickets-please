@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Filters\V1\TicketFilter;
+use App\Http\Requests\Api\V1\ReplaceTicketRequest;
 use App\Http\Requests\Api\V1\StoreTicketRequest;
 use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
@@ -46,28 +47,60 @@ class TicketController extends ApiController
     /**
      * Display the specified resource.
      */
-    public function show(Ticket $ticket)
+    public function show($ticketId)
     {
-        if ( $this->include('author') ) {
-            return new TicketResource($ticket->load('user'));
-        }
+        try {
+            $ticket = Ticket::query()->findOrFail($ticketId);
+            if ( $this->include('author') ) {
+                return new TicketResource($ticket->load('user'));
+            }
 
-        return new TicketResource($ticket);
+            return new TicketResource($ticket);
+        } catch (ModelNotFoundException $exception) {
+            return $this->error('Ticket not found.', 404);
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateTicketRequest $request, Ticket $ticket)
+    public function update(UpdateTicketRequest $request, $ticketId) {}
+
+    public function replace(ReplaceTicketRequest $request, $ticketId)
     {
-        //
+        try {
+            $ticket = Ticket::query()->findOrFail($ticketId);
+
+            $model = [
+                'title'       => $request->input('data.attributes.title'),
+                'description' => $request->input('data.attributes.description'),
+                'status'      => $request->input('data.attributes.status'),
+                'user_id'     => $request->input('data.relationships.author.data.id'),
+            ];
+
+            $ticket->update($model);
+
+            return new TicketResource($ticket->refresh());
+        } catch (ModelNotFoundException $exception) {
+            return $this->ok('Ticket not found.', [
+                'error' => 'The provided ticket id does not exist.'
+            ]);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Ticket $ticket)
+    public function destroy($ticketId)
     {
-        //
+        try {
+            $ticket = Ticket::query()->findOrFail($ticketId);
+
+            $ticket->delete();
+
+            return $this->ok('Ticket successfully deleted.');
+        } catch (ModelNotFoundException $exception) {
+            return $this->error('Ticket not found.', 404);
+        }
     }
 }

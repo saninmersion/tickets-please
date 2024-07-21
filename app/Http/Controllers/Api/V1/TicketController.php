@@ -9,10 +9,13 @@ use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Policies\V1\TicketPolicy;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TicketController extends ApiController
 {
+    protected $policyClass = TicketPolicy::class;
+
     /**
      * Display a listing of the resource.
      */
@@ -28,6 +31,9 @@ class TicketController extends ApiController
     {
         try {
             $user = User::query()->findOrFail($request->input('data.relationships.author.data.id'));
+
+            $this->isAble('store', null);
+
         } catch (ModelNotFoundException $exception) {
             return $this->ok('User not found.', [
                 'error' => 'The provided user id does not exist.'
@@ -59,6 +65,8 @@ class TicketController extends ApiController
         try {
             $ticket = Ticket::query()->findOrFail($ticketId);
 
+            $this->isAble('replace', $ticket);
+
             $ticket->update($request->mappedAttributes());
 
             return new TicketResource($ticket->refresh());
@@ -77,6 +85,8 @@ class TicketController extends ApiController
         try {
             $ticket = Ticket::query()->findOrFail($ticketId);
 
+            $this->isAble('delete', $ticket);
+
             $ticket->delete();
 
             return $this->ok('Ticket successfully deleted.');
@@ -92,8 +102,9 @@ class TicketController extends ApiController
     {
         try {
             $ticket = Ticket::query()
-                ->where('id', $ticketId)
-                ->firstOrFail();
+                ->findOrFail($ticketId);
+
+            $this->isAble('update', $ticket);
 
             $ticket->update($request->mappedAttributes());
 

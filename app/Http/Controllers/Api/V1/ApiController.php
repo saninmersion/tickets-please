@@ -10,6 +10,8 @@ class ApiController extends Controller
 {
     use ApiResponses;
 
+    protected $policyClass;
+
     public function include(string $relationship): bool
     {
         $params = request()->get('include');
@@ -21,5 +23,10 @@ class ApiController extends Controller
         $includeValues = explode(',', Str::lower($params));
 
         return in_array(Str::lower($relationship), $includeValues);
+    }
+
+    public function isAble($ability, $targetModel)
+    {
+        return $this->authorize($ability, [$targetModel, $this->policyClass]);
     }
 }

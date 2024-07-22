@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Filters\V1\TicketFilter;
-use App\Http\Requests\Api\V1\ReplaceTicketRequest;
-use App\Http\Requests\Api\V1\StoreTicketRequest;
-use App\Http\Requests\Api\V1\UpdateTicketRequest;
+use App\Http\Requests\Api\V1\Ticket\ReplaceUserRequest;
+use App\Http\Requests\Api\V1\Ticket\StoreUserRequest;
+use App\Http\Requests\Api\V1\Ticket\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
 use App\Policies\V1\TicketPolicy;
@@ -29,7 +29,7 @@ class AuthorTicketController extends ApiController
         );
     }
 
-    public function replace(ReplaceTicketRequest $request, $authorId, $ticketId)
+    public function replace(ReplaceUserRequest $request, $authorId, $ticketId)
     {
         try {
             $ticket = Ticket::query()
@@ -51,7 +51,7 @@ class AuthorTicketController extends ApiController
         }
     }
 
-    public function store(StoreTicketRequest $request, $authorId)
+    public function store(StoreUserRequest $request, $authorId)
     {
         try {
             $this->isAble('store', Ticket::class);

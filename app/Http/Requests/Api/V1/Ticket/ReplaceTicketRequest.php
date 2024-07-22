@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Api\V1;
-
-use Illuminate\Foundation\Http\FormRequest;
+namespace App\Http\Requests\Api\V1\Ticket;
 
 class ReplaceTicketRequest extends BaseTicketRequest
 {
